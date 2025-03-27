@@ -2,21 +2,19 @@ import random
 from cell import Cell
 
 class Grid:
-    def __init__(self, cell_size, cell_num, mines_count, top_bar):
+    def __init__(self, cell_size, cell_num, mines_count):
         """
         Initialize a Grid object.
         :param cell_size: Size of each cell
         :param cell_num: Number of cells in each row and column (grid dimension)
         :param mines_count: Number of mines to be placed on the grid
-        :param top_bar: Reference to the top bar UI
         """
         self.cell_size = cell_size
         self.cell_num = cell_num
         self.mines_count = mines_count
-        self.top_bar = top_bar
         
         # Create a 2D list of Cell objects for the grid
-        self.cells = [[Cell(x, y, self.cell_size, self.top_bar) for y in range(self.cell_num)]
+        self.cells = [[Cell(x, y, self.cell_size) for y in range(self.cell_num)]
                       for x in range(self.cell_num)]
         
         self.mines_placed = False
@@ -118,11 +116,11 @@ class Grid:
                 if cell.is_mined:
                     cell.reveal()
 
-    def draw(self, screen):
+    def draw(self, app, on_click):
         """
         Draw the entire grid on the screen.
         :param screen: The parent widget where the grid is drawn
         """
         for row in self.cells:
             for cell in row:
-                cell.draw(screen)
+                cell.draw(app, on_click)
