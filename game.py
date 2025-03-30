@@ -23,11 +23,16 @@ class Game :
         def on_click(cell):
             # Appeler la méthode `reveal()` sur la cellule correspondante
             if self.grid.reveal_cell(cell.x, cell.y):
-                print("Mine révélée!")
+                cell.draw_game_over()
             if self.grid.check_win_condition():
                 print("Victoire!")
+                #arrêter timer changer smiley
 
-        self.grid.draw(self.app, on_click)
+        def on_right_click(cell):
+            """Gestion du clic droit pour poser un drapeau sur la cellule"""
+            cell.toggle_flags()
+        
+        self.grid.draw(self.app, on_click, on_right_click)
 
     def run(self) :
         self.app.mainloop()
@@ -36,5 +41,6 @@ class Game :
 
 
 test = Game()
+
 
 test.run()

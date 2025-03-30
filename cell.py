@@ -17,20 +17,23 @@ class Cell:
         self.is_mined = False
         self.is_revealed = False
         self.is_flagged = False
+        self.is_questionned = False
         self.mines_around = 0
         # Load images for mines and neutral (unrevealed) cells
-        image = Image.open("images/mines.png")
-        self.img_mines = ImageTk.PhotoImage(image)
-        image = Image.open("images/exploded-mines.png")
-        self.img_exploded_mines = ImageTk.PhotoImage(image)
-        image = Image.open("images/wrong-mines.png")
-        self.img_wrong_mines = ImageTk.PhotoImage(image)
-        image = Image.open("images/neutrals.png")
-        self.clicked_neutrals = ImageTk.PhotoImage(image)
-        image = Image.open("images/flags.png")
-        self.flagged_buttons = ImageTk.PhotoImage(image)
-        image = Image.open("images/buttons.png")
-        self.img_buttons = ImageTk.PhotoImage(image)
+        image = Image.open("images/mine.png")
+        self.mine = ImageTk.PhotoImage(image)
+        image = Image.open("images/exploded-mine.png")
+        self.exploded_mine = ImageTk.PhotoImage(image)
+        image = Image.open("images/wrong-mine.png")
+        self.wrong_mine = ImageTk.PhotoImage(image)
+        image = Image.open("images/neutral.png")
+        self.neutral = ImageTk.PhotoImage(image)
+        image = Image.open("images/flag.png")
+        self.flagged = ImageTk.PhotoImage(image)
+        image = Image.open("images/button.png")
+        self.img_button = ImageTk.PhotoImage(image)
+        image = Image.open("images/QM.png")
+        self.question_mark = ImageTk.PhotoImage(image)
         self.number_images = {
             1: ImageTk.PhotoImage(Image.open("images/1.png")),
             2: ImageTk.PhotoImage(Image.open("images/2.png")),
@@ -42,7 +45,7 @@ class Cell:
             8: ImageTk.PhotoImage(Image.open("images/8.png"))
         }
 
-    def draw(self, app, on_click):
+    def draw(self, app, on_click, on_right_click):
         """
         Draw the cell as a button in the given screen.
         :param screen: Parent widget (the game grid)
@@ -58,19 +61,20 @@ class Cell:
         )
         button.grid(row=self.y, column=self.x, padx=0, pady=0)
         self.button = button  # Keep a reference to the button for later updates
-        if self.is_revealed:
+        # Associer un clic droit au bouton
+        self.button.bind("<Button-3>", lambda event: on_right_click(self))
+        """if self.is_revealed:
             if self.is_mined:
-                button.configure(image=self.img_mines)  # Show mine image if the cell is mined
+                button.configure(image=self.mine)  # Show mine image if the cell is mined
             else:
                 if self.mines_around > 1:
-                    print(self.mines_around)
                     button.configure(image=self.number_images.get(self.mines_around))  # Display the number of adjacent mines
                 else:
-                    button.configure(image=self.clicked_neutrals)  # Display neutral cell if not
-        elif self.is_flagged :
-            button.configure(image=self.flagged_buttons)
-        else :
-            button.configure(image=self.img_buttons)    # Show button image if not revealed
+                    button.configure(image=self.neutral)  # Display neutral cell if not
+            elif self.is_flagged :
+                button.configure(image=self.flagged)
+            else :"""
+        button.configure(image=self.img_button)    # Show button image if not revealed
             
 
     def toggle_flags(self):
@@ -78,7 +82,13 @@ class Cell:
         Toggle flag status if the cell is not revealed.
         """
         if not self.is_revealed:
-            self.is_flagged = not self.is_flagged
+            if not self.is_questionned :
+                self.is_flagged = not self.is_flagged
+                if not self.is_flagged :
+                    self.is_questionned = not self.is_questionned
+            else :
+                self.is_questionned = not self.is_questionned
+        self.update_button()
 
     def reveal(self):
         """
@@ -98,12 +108,30 @@ class Cell:
         # Assumes `button` is available for updating the image. 
         # If you don't pass the button reference, you should ensure the button 
         # is correctly fetched and updated when revealing the cell.
-        if self.is_mined:
-            self.button.configure(image=self.img_mines)
-        else:
-            if self.mines_around > 0:
-                print(self.mines_around)
+        if self.is_revealed :
+            if self.is_mined :
+                self.button.configure(image=self.exploded_mine)
+            elif self.mines_around > 0 :
                 self.button.configure(image=self.number_images.get(self.mines_around))
             else:
-                self.button.configure(image=self.clicked_neutrals)  # Neutral image when no adjacent mines
+                self.button.configure(image=self.neutral)  # Neutral image when no adjacent mines
+        else :
+            if self.is_flagged :
+                self.button.configure(image=self.flagged)
+            elif self.is_questionned :
+                self.button.configure(image=self.question_mark)
+            else :
+                self.button.configure(image=self.img_button)
+
+    def draw_game_over(self):
+        if self.is_mined :
+            if self.is_flagged :
+                self.button.configure(image=self.flagged)
+            elif self.is_revealed :
+                self.button.configure(image=self.exploded_mine)
+            else :
+                self.button.configure(image=self.mine)
+        else :
+            if self.is_flagged :
+                self.button.configure(image=self.wrong_mine)
                 

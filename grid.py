@@ -26,13 +26,14 @@ class Grid:
         :param safe_y: Y coordinate of the safe cell (the first cell clicked by the user)
         """
         mines_to_place = self.mines_count
+        safe_zone = {(safe_x + dx, safe_y + dy) for dx in range(-1, 2) for dy in range(-1, 2)}
         while mines_to_place > 0:
             # Randomly pick a cell for the mine
             x = random.randint(0, self.cell_num - 1)
             y = random.randint(0, self.cell_num - 1)
             
             # Avoid placing a mine on the safe cell or on an already mined cell
-            if (x, y) != (safe_x, safe_y) and not self.cells[x][y].is_mined:
+            if (x, y) not in safe_zone and not self.cells[x][y].is_mined:
                 self.cells[x][y].is_mined = True
                 mines_to_place -= 1
 
@@ -73,6 +74,7 @@ class Grid:
         
         # Reveal the cell, and check if it contains a mine
         if self.cells[x][y].reveal():
+            self.game_over()
             return True
         
         # If the cell is empty (0 adjacent mines), reveal adjacent cells recursively
@@ -116,11 +118,16 @@ class Grid:
                 if cell.is_mined:
                     cell.reveal()
 
-    def draw(self, app, on_click):
+    def draw(self, app, on_click, on_left_click):
         """
         Draw the entire grid on the screen.
         :param screen: The parent widget where the grid is drawn
         """
         for row in self.cells:
             for cell in row:
-                cell.draw(app, on_click)
+                cell.draw(app, on_click, on_left_click)
+    
+    def game_over(self) :
+        for row in self.cells:
+            for cell in row:
+                cell.draw_game_over()
