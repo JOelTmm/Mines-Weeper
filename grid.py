@@ -205,3 +205,16 @@ class Grid:
                 cell.reset()
                 cell.update_button()
         self.mines_placed = False
+    
+    def check_victory(self):
+        """Vérifie si toutes les mines sont correctement flaguées."""
+        for row in self.cells:
+            for cell in row:
+                # Vérifie si toutes les mines ont un drapeau
+                if cell.is_mined and not cell.is_flagged:
+                    return False  # Il manque un drapeau sur une mine
+                # Vérifie qu'aucun drapeau n'est placé sur une cellule non minée
+                if not cell.is_mined and cell.is_flagged:
+                    return False  # Un drapeau mal placé
+
+        return True  # Toutes les mines sont flaguées et aucun drapeau mal placé

@@ -84,6 +84,9 @@ class Game :
                 if self.grid.recursive_game_over :
                     if self.game_over :
                         self.handle_game_over()
+                else :
+                    self.running = not self.grid.check_victory()
+
 
                 
         def on_hover():
@@ -116,7 +119,7 @@ class Game :
                 if self.is_left_click_pressed :
                     if not self.is_right_click_pressed :
                         self.is_left_click_active = True
-                        on_hover()
+                on_hover()
 
         # Créer et dessiner la grille
         self.grid = Grid(self.cell_size, self.row_cell_num, self.column_cell_num, self.mines_count, self)
