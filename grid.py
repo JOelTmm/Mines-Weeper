@@ -14,6 +14,7 @@ class Grid:
         self.column_cell_num = column_cell_num
         self.mines_count = mines_count
         self.game = game
+        self.recursive_game_over = False
         
         # Create a 2D list of Cell objects for the grid
         self.cells = [[Cell(x, y, self.cell_size, game) for y in range(self.column_cell_num)]

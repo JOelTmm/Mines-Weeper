@@ -82,8 +82,9 @@ class Game :
                 self.grid.inspected_cells.clear()
                 self.is_left_click_active = False
                 if self.grid.recursive_game_over :
-                    if self.game_over :
-                        self.handle_game_over()
+                    self.game_over = True
+                if self.game_over :
+                    self.handle_game_over()
                 else :
                     self.running = not self.grid.check_victory()
 
