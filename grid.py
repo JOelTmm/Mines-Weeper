@@ -132,16 +132,11 @@ class Grid:
                     
                     # Reveal the cell if it is not revealed
                     if not cell.is_revealed and not cell.is_flagged:
-                        self.reveal_cell(cell.x, cell.y)
+                        self.game.game_over = self.reveal_cell(cell.x, cell.y)
 
                         # If the revealed cell has no adjacent mines, recursively reveal its neighbors
                         if cell.mines_around == 0:
                             self.reveal_adjacent(nx, ny)
-
-                        # If the cell contains a mine, we can stop the recursion but still reveal it
-                        if cell.is_mined:
-                            self.game.game_over = True  # Update the button to show the mine
-
 
     def check_win_condition(self):
         """
