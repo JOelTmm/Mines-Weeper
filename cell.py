@@ -1,4 +1,3 @@
-import customtkinter as ctk
 import tkinter as tk
 from PIL import Image, ImageTk
 
@@ -48,13 +47,13 @@ class Cell:
             8: ImageTk.PhotoImage(Image.open("images/8.png"))
         }
 
-    def draw(self, app, on_right_press, on_right_release, on_left_press, on_left_release):
+    def draw(self, parent_frame, on_right_press, on_right_release, on_left_press, on_left_release):
         """
         Draw the cell as a button in the given screen.
         :param screen: Parent widget (the game grid)
         """
         button = tk.Button(
-            app,
+            parent_frame,
             width=self.size,
             height=self.size,
             borderwidth=0,         # Supprime la bordure
@@ -76,12 +75,17 @@ class Cell:
         Toggle flag status if the cell is not revealed.
         """
         if not self.is_revealed:
-            if not self.is_questionned :
-                self.is_flagged = not self.is_flagged
-                if not self.is_flagged :
-                    self.is_questionned = not self.is_questionned
-            else :
-                self.is_questionned = not self.is_questionned
+                if self.game.flags_count <= self.game.mines_count :
+                    if not self.is_questionned and not self.is_flagged:
+                        if self.game.flags_count < self.game.mines_count :
+                            self.game.flags_count += 1
+                            self.is_flagged = True
+                    elif self.is_flagged :
+                            self.is_flagged = False
+                            self.is_questionned = True
+                            self.game.flags_count -= 1
+                    else :
+                        self.is_questionned = False
         self.update_button()
 
     def reveal(self):
@@ -130,10 +134,14 @@ class Cell:
                 self.button.configure(image=self.mine)
         else :
             if self.is_flagged :
-                print(f"Wrong flag detected at ({self.x}, {self.y})!")
                 self.button.configure(image=self.wrong_mine)
-                print("Image updated to wrong mine")
-                self.button.update_idletasks()
-
     
                 
+    def reset(self) :       
+        self.is_mined = False
+        self.is_revealed = False
+        self.is_flagged = False
+        self.is_questionned = False
+        self.is_inspected = False
+        self.mines_around = 0
+        self.flags_around = 0

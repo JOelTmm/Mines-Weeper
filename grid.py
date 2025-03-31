@@ -2,7 +2,7 @@ import random
 from cell import Cell
 
 class Grid:
-    def __init__(self, cell_size, cell_num, mines_count, game):
+    def __init__(self, cell_size, row_cell_num, column_cell_num, mines_count, game):
         """
         Initialize a Grid object.
         :param cell_size: Size of each cell
@@ -10,13 +10,14 @@ class Grid:
         :param mines_count: Number of mines to be placed on the grid
         """
         self.cell_size = cell_size
-        self.cell_num = cell_num
+        self.row_cell_num = row_cell_num
+        self.column_cell_num = column_cell_num
         self.mines_count = mines_count
         self.game = game
         
         # Create a 2D list of Cell objects for the grid
-        self.cells = [[Cell(x, y, self.cell_size, game) for y in range(self.cell_num)]
-                      for x in range(self.cell_num)]
+        self.cells = [[Cell(x, y, self.cell_size, game) for y in range(self.column_cell_num)]
+                      for x in range(self.row_cell_num)]
         
         self.mines_placed = False
         self.inspected_cells = set()
@@ -31,8 +32,8 @@ class Grid:
         safe_zone = {(safe_x + dx, safe_y + dy) for dx in range(-1, 2) for dy in range(-1, 2)}
         while mines_to_place > 0:
             # Randomly pick a cell for the mine
-            x = random.randint(0, self.cell_num - 1)
-            y = random.randint(0, self.cell_num - 1)
+            x = random.randint(0, self.row_cell_num - 1)
+            y = random.randint(0, self.column_cell_num - 1)
             
             # Avoid placing a mine on the safe cell or on an already mined cell
             if (x, y) not in safe_zone and not self.cells[x][y].is_mined:
@@ -40,8 +41,8 @@ class Grid:
                 mines_to_place -= 1
 
         # After placing mines, calculate the number of adjacent mines for each cell
-        for x in range(self.cell_num):
-            for y in range(self.cell_num):
+        for x in range(self.row_cell_num):
+            for y in range(self.column_cell_num):
                 self.cells[x][y].mines_around = self.count_mines_around(x, y)
 
     def count_mines_around(self, x, y):
@@ -57,7 +58,7 @@ class Grid:
             for dy in range(-1, 2):
                 nx, ny = x + dx, y + dy
                 # Ensure the neighbor is within grid boundaries
-                if 0 <= nx < self.cell_num and 0 <= ny < self.cell_num:
+                if 0 <= nx < self.row_cell_num and 0 <= ny < self.column_cell_num:
                     if self.cells[nx][ny].is_mined:
                         count += 1
         return count
@@ -69,10 +70,9 @@ class Grid:
             for dy in range(-1, 2):
                 nx, ny = x + dx, y + dy
                 # Ensure the neighbor is within grid boundaries
-                if 0 <= nx < self.cell_num and 0 <= ny < self.cell_num:
+                if 0 <= nx < self.row_cell_num and 0 <= ny < self.column_cell_num:
                     if self.cells[nx][ny].is_flagged:
                         count += 1
-        print(count)
         return count
 
     def reveal_cell(self, x, y):
@@ -83,13 +83,15 @@ class Grid:
         :return: True if the revealed cell contains a mine, False otherwise
         """
         if not self.mines_placed:
+            # Start the game with the top bar and grid
+            self.game.topbar.start_timer()
             # Place mines after the first cell is revealed
             self.place_mines(x, y)
             self.mines_placed = True
         
         # Reveal the cell, and check if it contains a mine
         if self.cells[x][y].reveal():
-            self.game_over()
+            self.draw_game_over()
             return True
         
         # If the cell is empty (0 adjacent mines), reveal adjacent cells recursively
@@ -108,7 +110,7 @@ class Grid:
         for dx in range(-1, 2):
             for dy in range(-1, 2):
                 nx, ny = x + dx, y + dy
-                if 0 <= nx < self.cell_num and 0 <= ny < self.cell_num:
+                if 0 <= nx < self.row_cell_num and 0 <= ny < self.column_cell_num:
                     cell = self.cells[nx][ny]
                     if not cell.is_revealed and not cell.is_mined:
                         cell.reveal()
@@ -127,29 +129,22 @@ class Grid:
         for dx in range(-1, 2):
             for dy in range(-1, 2):
                 nx, ny = x + dx, y + dy
-                if 0 <= nx < self.cell_num and 0 <= ny < self.cell_num:
+                if 0 <= nx < self.row_cell_num and 0 <= ny < self.column_cell_num:
                     cell = self.cells[nx][ny]
                     
                     # Reveal the cell if it is not revealed
                     if not cell.is_revealed and not cell.is_flagged:
-                        self.game.game_over = self.reveal_cell(cell.x, cell.y)
-
                         # If the revealed cell has no adjacent mines, recursively reveal its neighbors
                         if cell.mines_around == 0:
-                            self.reveal_adjacent(nx, ny)
+                            self.recursive_reveal(nx, ny)
+                        self.recursive_game_over = self.reveal_cell(cell.x, cell.y)
+                        if self.recursive_game_over :
+                            self.game.handle_game_over()
+                            self.game_over = not self.game_over
 
-    def check_win_condition(self):
-        """
-        Check if the player has won the game (all non-mined cells are revealed).
-        :return: True if the player has won, False otherwise
-        """
-        for row in self.cells:
-            for cell in row:
-                if not cell.is_mined and not cell.is_revealed:
-                    return False
-        return True
+                        
 
-    def draw(self, app, on_right_press, on_right_release, on_left_press, on_left_release):
+    def draw(self, parent_frame, on_right_press, on_right_release, on_left_press, on_left_release):
         """
         Draw the entire grid on the screen.
         :param screen: The parent widget where the grid is drawn
@@ -157,9 +152,9 @@ class Grid:
         for row in self.cells:
             for cell in row:
 
-                cell.draw(app, on_right_press, on_right_release, on_left_press, on_left_release)
+                cell.draw(parent_frame, on_right_press, on_right_release, on_left_press, on_left_release)
     
-    def game_over(self) :
+    def draw_game_over(self) :
         for row in self.cells:
             for cell in row:
                 cell.draw_game_over()
@@ -169,7 +164,7 @@ class Grid:
         for dx in range(-1, 2):
             for dy in range(-1, 2):
                 nx, ny = x + dx, y + dy
-                if 0 <= nx < self.cell_num and 0 <= ny < self.cell_num:
+                if 0 <= nx < self.row_cell_num and 0 <= ny < self.column_cell_num:
                     adjacent_cells.append(self.cells[nx][ny])
         return adjacent_cells
 
@@ -194,9 +189,6 @@ class Grid:
         """Met à jour uniquement la cellule inspectée (pour hover sur une cellule non révélée)."""
         # Stocke l'ancienne cellule inspectée pour la réinitialiser
         old_inspected_cells = self.inspected_cells.copy()
-
-        print(f"Ancienne cellule inspectée : {[f'({c.x}, {c.y})' for c in old_inspected_cells]}")
-
         # Réinitialiser les anciennes cellules inspectées
         for cell in old_inspected_cells:
             cell.is_inspected = False
@@ -207,3 +199,9 @@ class Grid:
         self.cells[x][y].is_inspected = True
         self.cells[x][y].update_button()
 
+    def reset_all_cells(self):
+        for row in self.cells:
+            for cell in row:
+                cell.reset()
+                cell.update_button()
+        self.mines_placed = False
