@@ -128,7 +128,6 @@ class Game :
         self.app.bind("<B1-Motion>", on_motion)
 
     def handle_game_over(self) :
-        print("lol")
         self.running = False
         self.game_over = True
         self.current_cell = None
