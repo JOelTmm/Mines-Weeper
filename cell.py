@@ -4,7 +4,7 @@ from PIL import Image, ImageTk
 
 
 class Cell:
-    def __init__(self, x, y, size):
+    def __init__(self, x, y, size, game):
         """
         Initialize a Cell object.
         :param x: X coordinate in the grid
@@ -18,7 +18,10 @@ class Cell:
         self.is_revealed = False
         self.is_flagged = False
         self.is_questionned = False
+        self.is_inspected = False
         self.mines_around = 0
+        self.flags_around = 0
+        self.game = game
         # Load images for mines and neutral (unrevealed) cells
         image = Image.open("images/mine.png")
         self.mine = ImageTk.PhotoImage(image)
@@ -45,7 +48,7 @@ class Cell:
             8: ImageTk.PhotoImage(Image.open("images/8.png"))
         }
 
-    def draw(self, app, on_click, on_right_click):
+    def draw(self, app, on_right_press, on_right_release, on_left_press, on_left_release):
         """
         Draw the cell as a button in the given screen.
         :param screen: Parent widget (the game grid)
@@ -56,24 +59,15 @@ class Cell:
             height=self.size,
             borderwidth=0,         # Supprime la bordure
             relief="sunken",         # Empêche l'effet de clic
-            highlightthickness=0,  # Épaisseur du bord
-            command=lambda: on_click(self)
+            highlightthickness=0
         )
         button.grid(row=self.y, column=self.x, padx=0, pady=0)
         self.button = button  # Keep a reference to the button for later updates
         # Associer un clic droit au bouton
-        self.button.bind("<Button-3>", lambda event: on_right_click(self))
-        """if self.is_revealed:
-            if self.is_mined:
-                button.configure(image=self.mine)  # Show mine image if the cell is mined
-            else:
-                if self.mines_around > 1:
-                    button.configure(image=self.number_images.get(self.mines_around))  # Display the number of adjacent mines
-                else:
-                    button.configure(image=self.neutral)  # Display neutral cell if not
-            elif self.is_flagged :
-                button.configure(image=self.flagged)
-            else :"""
+        button.bind("<ButtonPress-1>", lambda event: on_left_press(self, event))
+        self.button.bind("<ButtonRelease-1>", lambda event: on_left_release(self, event))
+        self.button.bind("<ButtonPress-3>", lambda event: on_right_press(self, event))
+        self.button.bind("<ButtonRelease-3>", lambda event: on_right_release(self, event))
         button.configure(image=self.img_button)    # Show button image if not revealed
             
 
@@ -120,8 +114,11 @@ class Cell:
                 self.button.configure(image=self.flagged)
             elif self.is_questionned :
                 self.button.configure(image=self.question_mark)
+            elif self.is_inspected :
+                self.button.configure(image=self.neutral)
             else :
                 self.button.configure(image=self.img_button)
+        
 
     def draw_game_over(self):
         if self.is_mined :
@@ -133,5 +130,10 @@ class Cell:
                 self.button.configure(image=self.mine)
         else :
             if self.is_flagged :
+                print(f"Wrong flag detected at ({self.x}, {self.y})!")
                 self.button.configure(image=self.wrong_mine)
+                print("Image updated to wrong mine")
+                self.button.update_idletasks()
+
+    
                 
